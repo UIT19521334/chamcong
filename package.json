@@ -1,0 +1,39 @@
+{
+  "name": "chamcong",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx playwright test --headed --workers 1",
+    "test:a01": "npx playwright test tests/A01.BrokenAccessControl.spec.js --headed --workers 1",
+    "test:a03": "npx playwright test tests/A03.Injection.spec.js --headed --workers 1",
+    "test:a04": "npx playwright test tests/A04.InsecureDesign.spec.js --headed --workers 1",
+    "test:a07": "npx playwright test tests/A07.IdentificationAndAuthenticationFailures.spec.js --headed --workers 1",
+    "test:sequential": "npm run test:a01 && npm run test:a03 && npm run test:a04 && npm run test:a07",
+    "start": "nodemon index.js",
+    "initdb": "node infras/init_db.js",
+    "initdata": "node infras/init_data.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.10.0",
+    "bcrypt": "^6.0.0",
+    "body-parser": "^2.2.0",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
+    "express-session": "^1.18.1",
+    "highlight.js": "^11.11.1",
+    "ip": "^2.0.1",
+    "lodash": "4.17.15",
+    "moment": "2.19.0",
+    "multer": "^2.0.1",
+    "nodemon": "^3.1.10",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.1"
+  }
+}

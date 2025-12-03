@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Security Level</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container d-flex justify-content-center align-items-center min-vh-100">
+    <div class="card shadow p-4" style="min-width: 350px; max-width: 400px; width: 100%;">
+      <h2 class="mb-4 text-center">Security Level</h2>
+      <div class="current mb-3 text-center text-primary fw-bold" id="current-level"></div>
+      <button class="btn btn-danger btn-lg w-100 mb-2" onclick="setLevel('low')">Low Security</button>
+      <button class="btn btn-success btn-lg w-100 mb-3" onclick="setLevel('high')">High Security</button>
+      <div class="text-center"><a href="/login">Login</a></div>
+    </div>
+    <!-- Toast notification -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+      <div id="levelToast" class="toast align-items-center text-bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body" id="toast-body">
+            Security level updated!
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function setLevel(level) {
+      localStorage.setItem('SECURITY_LEVEL', level);
+      document.cookie = "SECURITY_LEVEL=" + level + "; path=/";
+      showCurrent();
+      showToast('Security level set to ' + level.toUpperCase() + '!');
+    }
+    function showCurrent() {
+      const level = localStorage.getItem('SECURITY_LEVEL') || 'high';
+      document.getElementById('current-level').textContent = 'Current level: ' + level.toUpperCase();
+    }
+    function showToast(msg) {
+      document.getElementById('toast-body').textContent = msg;
+      var toastEl = document.getElementById('levelToast');
+      var toast = new bootstrap.Toast(toastEl);
+      toast.show();
+    }
+    showCurrent();
+  </script>
+</body>
+</html>

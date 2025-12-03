@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container d-flex justify-content-center align-items-center min-vh-100">
+        <div class="card shadow p-4" style="min-width: 350px; max-width: 500px; width: 100%;">
+            <h2 class="mb-4 text-center">Welcome, <span id="username-display">User</span>!</h2>
+            <p class="text-center">This is the home page for regular users.</p>
+            <nav class="mb-3">
+                <ul class="list-group">
+                    <li class="list-group-item text-center">
+                        <a href="/posts" class="text-decoration-none">
+                            <i class="bi bi-journal-text me-2"></i>My Posts
+                        </a>
+                    </li>
+                    <li class="list-group-item text-center">
+                        <a href="#" id="profile-link" class="text-decoration-none">
+                            <i class="bi bi-person-circle me-2"></i>My Profile
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <form action="/logout" method="POST" class="text-center">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-box-arrow-right me-2"></i>Logout
+                </button>
+            </form>
+            <div id="security-level" class="mt-3 text-center text-secondary" style="font-size: 14px;"></div>
+            <div class="mt-2 text-center">
+                <a href="/config" class="text-decoration-none">
+                    <i class="bi bi-gear me-1"></i>Change security level
+                </a>
+            </div>
+        </div>
+    </div>
+    <script type="module">
+        import { getSecurityLevel } from '/public/js/securityLevel.js';
+        
+        // Display security level
+        const level = getSecurityLevel();
+        document.getElementById('security-level').textContent = 'Security level: ' + level;
+        
+        // Get current user using new "get me" API
+        async function loadCurrentUser() {
+            try {
+                const response = await fetch('/api/me');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.user) {
+                        // Update welcome message with username
+                        document.getElementById('username-display').textContent = data.user.username;
+                        
+                        // Update profile link to go to user's profile
+                        const profileLink = document.getElementById('profile-link');
+                        profileLink.href = `/profile/${data.user.username}`;
+                        
+                        console.log('Current user loaded via /api/me:', data.user.username);
+                        console.log('User role:', data.user.role);
+                        console.log('User location:', data.user.location || 'Not specified');
+                    } else {
+                        console.log('User not authenticated - redirecting to login');
+                        handleAuthFailure();
+                    }
+                } else if (response.status === 401) {
+                    console.log('User not authenticated (401) - redirecting to login');
+                    handleAuthFailure();
+                } else {
+                    console.log('Failed to get current user - redirecting to login');
+                    handleAuthFailure();
+                }
+            } catch (error) {
+                console.error('Error loading current user:', error);
+                handleAuthFailure();
+            }
+        }
+        
+        // Handle authentication failure with better UX
+        function handleAuthFailure() {
+            const level = getSecurityLevel();
+            if (level === 'high') {
+                // In high security mode, redirect immediately
+                window.location.href = '/login';
+            } else {
+                // In low security mode, check if user has cookies first
+                const currentUser = getCookie('current_user');
+                if (currentUser) {
+                    // User has cookies, show their info even if API failed
+                    document.getElementById('username-display').textContent = currentUser;
+                    const profileLink = document.getElementById('profile-link');
+                    profileLink.href = `/profile/${currentUser}`;
+                    
+                    const userRole = getCookie('user_role') || 'user';
+                    const userLocation = getCookie('user_location') || 'Not specified';
+                } else {
+                    // No cookies, show guest access
+                    document.getElementById('username-display').textContent = 'Guest';
+                    const profileLink = document.getElementById('profile-link');
+                    profileLink.href = '#';
+                    profileLink.onclick = (e) => {
+                        e.preventDefault();
+                        alert('Please login to access your profile');
+                        window.location.href = '/login';
+                    };
+                    
+                    const warningDiv = document.createElement('div');
+                    warningDiv.className = 'alert alert-warning mt-3';
+                    warningDiv.innerHTML = `
+                        <h6><i class="bi bi-exclamation-triangle me-2"></i>Authentication Warning</h6>
+                        <p class="mb-2">You are not properly authenticated but can access this page in low security mode.</p>
+                        <a href="/login" class="btn btn-sm btn-primary">Login Now</a>
+                    `;
+                    document.querySelector('.card').appendChild(warningDiv);
+                }
+            }
+        }
+        
+        // Helper function to get cookie value
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+        
+        // Load current user on page load
+        loadCurrentUser();
+    </script>
+</body>
+</html>
