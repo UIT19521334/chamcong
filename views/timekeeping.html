@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timekeeping</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      background: #f5f6fa;
+    }
+
+    .container-custom {
+      max-width: 1000px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px #eee;
+      padding: 24px;
+    }
+
+    .user-pill {
+      cursor: pointer;
+    }
+
+    .user-pill.active {
+      background-color: #0d6efd !important;
+      color: #fff !important;
+    }
+
+    .table-sticky thead th {
+      position: sticky;
+      top: 0;
+      background-color: #f8f9fa;
+      z-index: 1;
+    }
+
+    .status-badge {
+      min-width: 80px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container container-custom">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h2 class="mb-1">
+          <i class="bi bi-clock-history me-2"></i>Chấm công theo tháng
+        </h2>
+        <small class="text-muted">Xem dữ liệu chấm công của từng nhân viên trong tháng</small>
+      </div>
+      <a href="/home" class="btn btn-outline-primary">
+        <i class="bi bi-house me-1"></i>Trang chủ
+      </a>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Danh sách nhân viên</label>
+      <div id="user-list" class="d-flex flex-wrap gap-2">
+        <!-- user pills -->
+      </div>
+    </div>
+
+    <div class="row g-3 mb-3 align-items-end">
+      <div class="col-md-4">
+        <label for="month-select" class="form-label fw-semibold">Tháng</label>
+        <input type="month" id="month-select" class="form-control" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Nhân viên đang xem</label>
+        <div id="current-user-display" class="form-control-plaintext fw-bold">-</div>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <span class="badge bg-secondary" id="total-days">0 ngày</span>
+        <span class="badge bg-success ms-1" id="total-present">0 ngày công</span>
+        <span class="badge bg-warning text-dark ms-1" id="total-late">0 đi trễ</span>
+        <span class="badge bg-danger ms-1" id="total-absent">0 vắng</span>
+      </div>
+    </div>
+
+    <div class="table-responsive table-sticky" style="max-height: 60vh;">
+      <table class="table table-bordered align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 80px;">Ngày</th>
+            <th style="width: 140px;">Check-in</th>
+            <th style="width: 140px;">Check-out</th>
+            <th>Trạng thái</th>
+            <th>Ghi chú</th>
+          </tr>
+        </thead>
+        <tbody id="timekeeping-body">
+          <!-- rows -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let employees = [];
+    let currentUserId = null;
+    let currentUser = null;
+    let currentUserRole = 'user';
+
+    // Load current user info from /api/me và mapping sang danh sách nhân viên giả
+    async function loadCurrentUser() {
+      try {
+        const response = await fetch('/api/me');
+        if (!response.ok) return;
+
+        const data = await response.json();
+        if (!data.success || !data.user) return;
+
+        currentUser = data.user;
+        currentUserRole = currentUser.role || 'user';
+
+        // Tìm employee tương ứng trong danh sách lấy từ DB theo username
+        const matchedUser = employees.find(
+          (u) => u.username === currentUser.username
+        );
+
+        if (matchedUser) {
+          currentUserId = matchedUser.id;
+          const displayEl = document.getElementById('current-user-display');
+          if (displayEl) {
+            displayEl.textContent = `${matchedUser.fullName} (${matchedUser.username})`;
+          }
+        }
+      } catch (error) {
+        console.error('Error loading current user for timekeeping:', error);
+      }
+    }
+
+    function formatDateLabel(dateStr) {
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return dateStr;
+      const day = d.getDate().toString().padStart(2, '0');
+      const weekday = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][d.getDay()];
+      return `${day} (${weekday})`;
+    }
+
+    function renderUserList() {
+      const container = document.getElementById('user-list');
+      container.innerHTML = '';
+
+      employees.forEach((u) => {
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-sm btn-outline-primary user-pill';
+        btn.textContent = u.fullName;
+        btn.dataset.userId = u.id;
+
+        if (u.id === currentUserId) {
+          btn.classList.add('active');
+        }
+
+        btn.addEventListener('click', () => {
+          // Nếu không phải admin thì không cho đổi sang user khác
+          if (currentUserRole !== 'admin' && u.id !== currentUserId) {
+            return;
+          }
+
+          currentUserId = u.id;
+          updateActiveUserPills();
+          renderCurrentUserInfo();
+          renderTable();
+        });
+
+        container.appendChild(btn);
+      });
+    }
+
+    function updateActiveUserPills() {
+      const pills = document.querySelectorAll('.user-pill');
+      pills.forEach((p) => {
+        const id = Number(p.dataset.userId);
+        if (id === currentUserId) {
+          p.classList.add('active');
+        } else {
+          p.classList.remove('active');
+        }
+      });
+    }
+
+    function renderCurrentUserInfo() {
+      const user = employees.find((u) => u.id === currentUserId);
+
+      const el = document.getElementById('current-user-display');
+      if (user) {
+        el.textContent = `${user.fullName} (${user.username})`;
+      } else {
+        el.textContent = '-';
+      }
+    }
+
+    function getSelectedMonth() {
+      const monthInput = document.getElementById('month-select');
+      return monthInput.value || '';
+    }
+
+    async function renderTable() {
+      const tbody = document.getElementById('timekeeping-body');
+      tbody.innerHTML = '';
+
+      const monthKey = getSelectedMonth();
+      if (!currentUserId || !monthKey) {
+        updateSummary(0, 0, 0, 0);
+        return;
+      }
+
+      const selectedUser = employees.find((u) => u.id === currentUserId);
+
+      if (!selectedUser) {
+        updateSummary(0, 0, 0, 0);
+        return;
+      }
+
+      let records = [];
+      try {
+        const params = new URLSearchParams({ userId: String(currentUserId), month: monthKey });
+        const res = await fetch(`/api/attendance?${params.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.records)) {
+            records = data.records;
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load attendance data', e);
+      }
+
+      let totalDays = records.length;
+      let present = 0;
+      let late = 0;
+      let absent = 0;
+
+      records.forEach((r) => {
+        if (r.status === 'present') present++;
+        else if (r.status === 'late') late++;
+        else if (r.status === 'absent') absent++;
+
+        const tr = document.createElement('tr');
+
+        const statusConfig = {
+          present: { text: 'Đủ công', cls: 'bg-success' },
+          late: { text: 'Đi trễ', cls: 'bg-warning text-dark' },
+          absent: { text: 'Vắng', cls: 'bg-danger' }
+        };
+
+        const cfg = statusConfig[r.status] || { text: r.status || '-', cls: 'bg-secondary' };
+
+        tr.innerHTML = `
+          <td>${formatDateLabel(r.date)}</td>
+          <td>${r.checkIn || '-'}</td>
+          <td>${r.checkOut || '-'}</td>
+          <td>
+            <span class="badge ${cfg.cls} status-badge">${cfg.text}</span>
+          </td>
+          <td>${r.note || ''}</td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      updateSummary(totalDays, present, late, absent);
+    }
+
+    function updateSummary(total, present, late, absent) {
+      document.getElementById('total-days').textContent = `${total} ngày`;
+      document.getElementById('total-present').textContent = `${present} ngày công`;
+      document.getElementById('total-late').textContent = `${late} đi trễ`;
+      document.getElementById('total-absent').textContent = `${absent} vắng`;
+    }
+
+    function initMonthDefault() {
+      const monthInput = document.getElementById('month-select');
+      const now = new Date();
+      const month = (now.getMonth() + 1).toString().padStart(2, '0');
+      const value = `${now.getFullYear()}-${month}`;
+      monthInput.value = value;
+    }
+
+    function initEvents() {
+      document.getElementById('month-select').addEventListener('change', () => {
+        renderTable();
+      });
+    }
+
+    async function initTimekeepingPage() {
+      initMonthDefault();
+
+      // Load danh sách nhân viên từ API
+      try {
+        const res = await fetch('/api/employees');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.users)) {
+            // Chuẩn hóa dữ liệu: fullname từ DB -> fullName dùng trên UI
+            employees = data.users.map((u) => ({
+              id: u.id,
+              username: u.username,
+              fullName: u.fullname || u.fullName || u.username
+            }));
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load employees', err);
+      }
+
+      if (!employees.length) return;
+
+      // Thử load user hiện tại từ backend
+      await loadCurrentUser();
+
+      // Nếu không phải admin thì giới hạn danh sách chỉ còn chính mình
+      if (currentUserRole !== 'admin') {
+        const selfUser = employees.find((u) => u.username === currentUser.username);
+        if (selfUser) {
+          employees = [selfUser];
+          currentUserId = selfUser.id;
+        }
+      }
+
+      // Nếu backend không match user nào trong danh sách thì fallback user đầu tiên
+      if (!currentUserId && employees.length) {
+        currentUserId = employees[0].id;
+      }
+
+      renderUserList();
+      renderCurrentUserInfo();
+      initEvents();
+      renderTable();
+    }
+
+    document.addEventListener('DOMContentLoaded', initTimekeepingPage);
+  </script>
+</body>
+
+</html>

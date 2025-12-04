@@ -19,6 +19,7 @@
 
     ```bash
     npm run initdb
+    npm run cleardata
     npm run initdata
     ```
 

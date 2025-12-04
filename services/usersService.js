@@ -85,4 +85,24 @@ async function getCurrentUserHighSecurity(req, res) {
     }
 }
 
-module.exports = { getCurrentUserLowSecurity, getCurrentUserHighSecurity };
+// Lấy danh sách nhân viên để hiển thị ở màn chấm công
+async function getEmployees(req, res) {
+    const db = new PostgresDB();
+    try {
+        const result = await db.query(
+            'SELECT id, username, fullname FROM users ORDER BY id ASC'
+        );
+
+        return res.json({
+            success: true,
+            users: result.rows
+        });
+    } catch (err) {
+        console.error('Error fetching employees:', err);
+        return res.status(500).json({ success: false, message: 'Database error', error: err.message });
+    } finally {
+        await db.close();
+    }
+}
+
+module.exports = { getCurrentUserLowSecurity, getCurrentUserHighSecurity, getEmployees };

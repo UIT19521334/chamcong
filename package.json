@@ -12,6 +12,7 @@
     "test:sequential": "npm run test:a01 && npm run test:a03 && npm run test:a04 && npm run test:a07",
     "start": "nodemon index.js",
     "initdb": "node infras/init_db.js",
+    "cleardata": "node infras/clear_data.js",
     "initdata": "node infras/init_data.js"
   },
   "keywords": [],

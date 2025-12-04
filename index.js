@@ -126,13 +126,14 @@ const {
     getAllUsersLowSecurity
 } = require('./services//low/usersService');
 const {getAllUsersHighSecurity} = require('./services/high/usersService');
-const { getCurrentUserLowSecurity, getCurrentUserHighSecurity } = require('./services/usersService');
+const { getCurrentUserLowSecurity, getCurrentUserHighSecurity, getEmployees } = require('./services/usersService');
 const { secureSave } = require('./services/high/uploadService');
 const { insecureSave } = require('./services/low/uploadService');
 const { getPosts, getPostById, deletePost } = require('./services/postService');
 const { createPostLowSecurity, updatePostLowSecurity } = require('./services/low/postService');
 const { createPostHighSecurity, updatePostHighSecurity } = require('./services/high/postService');
 const { getProfile, updateProfile } = require('./services/profileService');
+const { getAttendanceByUserAndMonth } = require('./services/attendanceService');
 
 // Profile API - Security-level aware
 app.get('/api/profile/:username', getProfile);
@@ -164,6 +165,10 @@ app.get('/register', (req, res) => {
 
 app.get('/posts', (req, res) => {
     res.sendFile(path.join(__dirname + "/views", 'posts.html'));
+});
+
+app.get('/time', (req, res) => {
+    res.sendFile(path.join(__dirname + "/views", 'timekeeping.html'));
 });
 
 app.get('/profile/:username', (req, res) => {
@@ -257,6 +262,12 @@ app.get('/api/me', (req, res) => {
         return getCurrentUserLowSecurity(req, res);
     }
 });
+
+// Employees API - danh sách nhân viên cho màn hình chấm công
+app.get('/api/employees', getEmployees);
+
+// Attendance API: lấy dữ liệu chấm công theo user + tháng
+app.get('/api/attendance', getAttendanceByUserAndMonth);
 
 // Alternative specific endpoints for testing
 app.get('/low/api/me', getCurrentUserLowSecurity);
@@ -450,5 +461,5 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is running at http://localhost:${PORT}/login`);
+    console.log(`Server is running at http://localhost:${PORT}/config`);
 });
