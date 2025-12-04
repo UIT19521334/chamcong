@@ -1,0 +1,23 @@
+[2025-07-28T12:22:00.666Z] Login success for "datndc1" (role: user) from IP ::1
+[2025-08-04T11:42:18.733Z] Login success for "datndc1" (role: user) from IP ::1
+[2025-08-04T12:48:23.996Z] Login success for "user1" (role: user) from IP ::1
+[2025-08-28T08:39:14.577Z] Login success for "datndc1" (role: user) from IP ::1
+[2025-12-03T11:54:54.787Z] Login failed (WRONG PASSWORD) for "datndc0" - Attempt 1 from IP ::1
+[2025-12-03T11:55:00.803Z] Login success for "datndc1" (role: user) from IP ::1
+[2025-12-04T06:45:12.343Z] Login failed (WRONG PASSWORD) for "datndc0" - Attempt 2 from IP ::1
+[2025-12-04T06:45:17.277Z] Login failed (WRONG PASSWORD) for "datndc0" - Attempt 3 from IP ::1
+[2025-12-04T06:45:22.227Z] Login failed (WRONG PASSWORD) for "datndc0" - Attempt 4 from IP ::1
+[2025-12-04T06:45:48.189Z] Login failed (WRONG PASSWORD) for "datndc0" - Attempt 5 from IP ::1
+[2025-12-04T06:46:19.237Z] Login failed (BRUTE FORCE) for "datndc0" - Account locked until Thu Dec 04 2025 14:01:19 GMT+0700 (Indochina Time) from IP ::1
+[2025-12-04T06:46:46.978Z] Login success for "datndc1" (role: user) from IP ::1
+[2025-12-04T06:59:58.573Z] Login success for "datndc1" (role: user) from IP ::1
+[2025-12-04T07:09:48.385Z] Login success for "datndc1" (role: user) from IP ::1
+[2025-12-04T07:28:50.123Z] Login success for "datndc1" (role: user) from IP ::1
+[2025-12-04T07:32:13.790Z] Login success for "datndc1" (role: user) from IP ::1
+[2025-12-04T07:40:17.429Z] Login success for "datndc1" (role: user) from IP ::1
+[2025-12-04T07:45:09.489Z] Login success for "datndc1" (role: user) from IP ::1
+[2025-12-04T07:45:42.938Z] Login success for "datndc1" (role: user) from IP ::1
+[2025-12-04T07:46:46.031Z] Login success for "datndc1" (role: user) from IP ::1
+[2025-12-04T07:53:57.678Z] Login success for "datndc1" (role: admin) from IP ::1
+[2025-12-04T08:36:36.030Z] Login success for "datndc1" (role: admin) from IP ::1
+[2025-12-04T08:47:31.467Z] Login success for "datndc1" (role: admin) from IP ::1
